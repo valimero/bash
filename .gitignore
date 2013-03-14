@@ -1,0 +1,15 @@
+*.[oa]
+*~
+~*
+*.bak
+config.php
+_config.php
+config.php_
+.DS_Store
+.komodoproject
+.komodotools
+arka.komodoproject
+.DS_Store
+.project
+.settings
+.sublime-project
