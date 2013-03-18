@@ -79,6 +79,7 @@ if [ -x /usr/bin/dircolors ]; then
 fi
 
 # some more ls aliases
+#alias ls='ls -laFoGh'
 alias ls='ls --color=yes --full-time --time-style=long-iso'
 alias ll='ls -alF'
 alias la='ls -A'
@@ -86,6 +87,7 @@ alias l='ls -CF'
 alias cd..='cd ..'
 alias c='cd ..'
 alias cc='cd /'
+alias mkdir='mkdir -p'
 
 
 # Alias definitions.
