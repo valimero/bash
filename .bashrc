@@ -78,6 +78,11 @@ if [ -x /usr/bin/dircolors ]; then
     alias egrep='egrep --color=auto'
 fi
 
+# ajouter ~/bin dans le PATH quand celui-ci existe
+if [ -d ~/bin ] ; then
+  PATH=~/bin:"${PATH}"
+fi
+
 # some more ls aliases
 #alias ls='ls -laFoGh'
 alias ls='ls --color=yes --full-time --time-style=long-iso'
@@ -88,6 +93,10 @@ alias cd..='cd ..'
 alias c='cd ..'
 alias cc='cd /'
 alias mkdir='mkdir -p'
+
+
+# Pour afficher user@host dans le titre de la fenêtre
+PROMPT_COMMAND='echo -ne "33]0;$(id -un)@$(hostname -s)07"'
 
 
 # Alias definitions.
