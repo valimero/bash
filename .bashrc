@@ -30,7 +30,7 @@ fi
 
 # set a fancy prompt (non-color, unless we know we "want" color)
 case "$TERM" in
-    xterm|xterm-color) color_prompt=yes;;
+    xterm|xterm-color|xterm-256color) color_prompt=yes;;
 esac
 
 # uncomment for a colored prompt, if the terminal has the capability; turned
@@ -97,6 +97,13 @@ alias mkdir='mkdir -p'
 
 # Pour afficher user@host dans le titre de la fenêtre
 PROMPT_COMMAND='echo -ne "33]0;$(id -un)@$(hostname -s)07"'
+
+function my_ip() # Get IP adress on ethernet.
+{
+    MY_IP=$(/sbin/ifconfig eth0 | awk '/inet/ { print $2 } ' |
+      sed -e s/addr://)
+    echo ${MY_IP:-"Not connected"}
+}
 
 
 # Alias definitions.
