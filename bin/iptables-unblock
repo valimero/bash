@@ -1,0 +1,5 @@
+#list:
+#iptables -L -v --line-numbers
+
+#delete:
+#iptables -D name_of_chain number_of_line_with_IP_that_you_want_to_delete 
