@@ -1,0 +1,3 @@
+# Watch your postfix mail queue every minute with date prefix.
+# https://twitter.com/climagic/status/385811523366440960
+while true ; do date | tr -d $'\n' ; mailq | tail -1 ; sleep 1m ; done
