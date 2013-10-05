@@ -1,0 +1,2 @@
+# $1 est l'identifiant du mail. mailq pour avoir la liste
+postcat -q $1
