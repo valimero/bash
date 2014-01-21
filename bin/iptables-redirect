@@ -1,0 +1,27 @@
+#!/bin/sh
+
+USAGE="Usage: iptables-block.sh IPSRC IPDEST PORT"
+
+if test -z "$1"
+then
+    echo "Il me faut une adresse IP source"
+    echo $USAGE
+    exit 255
+fi
+
+if test -z "$2"
+then
+    echo "Il me faut une adresse IP de destination"
+    echo $USAGE
+    exit 254
+fi
+
+if test -z "$2"
+then
+    echo "Il me faut le port concerne"
+    echo $USAGE
+    exit 253
+fi
+
+iptables -t nat -A PREROUTING -p tcp -i eth0 --dport $3 -j DNAT --to-destination $2:$3
+iptables -t nat -A POSTROUTING -p tcp --dst $2 --dport $3 -j SNAT --to-source $1
