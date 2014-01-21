@@ -1,0 +1,7 @@
+#grep -rih @ . "
+
+#grep -rih @ . |grep -v "@font-face" |grep -v "@page" |grep -v mailto |grep -v 'localhost.localdomain' |grep -v 'cid:image' |sort |uniq
+
+#grep -rihEo '[a-z\.0-9\-\_]{1,}@[a-z0-9\-\_]*\.[a-z]{2,4}' . |grep -v "@font-face" |grep -v "@page" |grep -v mailto  |grep -v 'localhost.localdomain' |grep -v 'cid:image' |grep -v "localhost.loca" |sort |uniq
+
+grep -rihEo "\b[a-zA-Z0-9.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z0-9.-]+\b" |grep -v "@font-face" |grep -v "@page" |grep -v mailto |grep -v 'localhost.localdomain' |grep -v 'cid:image' |grep -v "localhost.loca" |sort |uniq
