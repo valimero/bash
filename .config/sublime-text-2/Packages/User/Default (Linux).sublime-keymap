@@ -5,4 +5,9 @@
 	{ "keys": ["ctrl+tab"], "command": "next_view" },
 	{ "keys": ["ctrl+shift+tab"], "command": "prev_view" }
 
+    { "keys": ["ctrl+alt+r"], "command": "delete_trailing_spaces" },
+
+    { "keys": ["ctrl+alt+d"], "command": "alignment" },
+
+    { "keys": ["ctrl+alt+shift+l"], "command": "csslisible" }
 ]

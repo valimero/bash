@@ -1,8 +1,13 @@
 {
-	"font_size": 9,
+    "color_scheme": "Packages/User/Monokai (SL).tmTheme",
 	"ignored_packages":
 	[
 		"Vintage"
 	],
-	"word_wrap": "true"
+
+    "tabs_size":4,
+    "translate_tabs_to_spaces":true,
+    "dictionary": "Packages/Language - French - Français/fr_FR.dic",
+    "word_wrap": "true",
+    "default_line_ending": "unix",
 }
