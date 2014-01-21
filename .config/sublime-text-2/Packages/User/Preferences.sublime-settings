@@ -1,23 +1,14 @@
 {
-<<<<<<< HEAD
     "color_scheme": "Packages/User/Monokai (SL).tmTheme",
-=======
 	"dictionary": "Packages/Language - French - Français/fr_FR.dic",
->>>>>>> refs/remotes/origin/master
 	"ignored_packages":
 	[
 		"Vintage"
 	],
-<<<<<<< HEAD
 
     "tabs_size":4,
     "translate_tabs_to_spaces":true,
     "dictionary": "Packages/Language - French - Français/fr_FR.dic",
     "word_wrap": "true",
     "default_line_ending": "unix",
-=======
-	"word_wrap": "true",
-	"default_line_ending": "unix",
-	"translate_tabs_to_spaces": true
->>>>>>> refs/remotes/origin/master
 }
