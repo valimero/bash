@@ -1,0 +1,2 @@
+grep status=sent /var/log/mail.log | cut -c1-7 | uniq -c
+
