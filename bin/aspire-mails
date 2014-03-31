@@ -1,1 +1,8 @@
+if test -z "$1"
+then
+    echo "Indiquez un site"
+    echo $USAGE
+    exit 255
+fi
+
 wget -q -O - $1 | grep -iEo '[a-z\.0-9\-\_]{1,}@[a-z0-9\-\_]*\.[a-z]{2,4}' | sort -u
