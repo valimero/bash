@@ -1,0 +1,8 @@
+if test -z "$1"
+then
+    echo "Indiquez un fichier source PNG"
+    echo $USAGE
+    exit 255
+fi
+
+/usr/bin/convert -resize x16 -gravity center -crop 16x16+0+0 $1 -flatten -colors 256 -background transparent favicon.ico
