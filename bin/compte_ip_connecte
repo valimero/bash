@@ -1,0 +1,19 @@
+#!/usr/bin/perl
+ 
+use strict;
+#!/usr/bin/perl
+ 
+use strict;
+use warnings;
+ 
+my %addrs = (); 
+my @netstatOut = split( /\n/, `netstat -taupen | grep SYN | tr -s " " | cut -d" " -f 5 | cut -d: -f1` );
+for (@netstatOut) {                                                                                                                                          
+    chomp $_; 
+    $addrs{$_} += 1;
+}
+ 
+for my $key ( sort {$addrs{$b} <=> $addrs{$a}} keys %addrs ) { 
+    print $addrs{$key}."\t$key\n";
+}
+
