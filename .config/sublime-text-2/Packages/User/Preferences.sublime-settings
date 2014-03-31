@@ -1,14 +1,15 @@
 {
     "color_scheme": "Packages/User/Monokai (SL).tmTheme",
-	"dictionary": "Packages/Language - French - Français/fr_FR.dic",
-	"ignored_packages":
-	[
-		"Vintage"
-	],
-
+    "default_line_ending": "unix",
+    "dictionary": "Packages/Language - French - Français/fr_FR.dic",
+    "find_selected_text": true,
+    "ignored_packages":
+    [
+        "Vintage"
+    ],
+    "open_files_in_new_window": false,
+    "show_full_path": true,
     "tabs_size":4,
     "translate_tabs_to_spaces":true,
-    "dictionary": "Packages/Language - French - Français/fr_FR.dic",
     "word_wrap": "true",
-    "default_line_ending": "unix",
 }
