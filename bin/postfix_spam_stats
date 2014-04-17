@@ -1,0 +1,2 @@
+cat /var/log/mail.log | sed -r -n 's/^(.*) \S+ postfix\/.* blocked using ([^;]+).*; from=<(\S+)> to=<(\S+)> proto=.* helo=.*>$/\1 - \2 - \3 - \4/p'
+
