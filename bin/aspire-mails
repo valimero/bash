@@ -6,3 +6,5 @@ then
 fi
 
 wget -q -O - $1 | grep -iEo '[a-z\.0-9\-\_]{1,}@[a-z0-9\-\_]*\.[a-z]{2,4}' | sort -u
+
+// A voir : http://theharvester.googlecode.com/svn/trunk/
