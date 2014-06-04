@@ -1,0 +1,10 @@
+#!/bin/sh
+
+if test -z "$1"
+then
+    echo "Il me faut une adresse IP"
+    echo $USAGE
+    exit 255
+fi
+
+awk '{a[$1] += $10} END {for (h in a) print h " " a[h]}' other_vhosts_access.log | sort -k 2 -nr | head -20
