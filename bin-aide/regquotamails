@@ -1,0 +1,359 @@
+#!/usr/bin/env php
+<?php
+/*
+ * This file is part of regquota.
+ *
+ * (c) Regis Enguehard <regis.enguehard@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+/*
+#cat /etc/regquota/config.php
+<?php
+
+$maildest = 'regis.enguehard@gmail.com';
+$repertoiremails = '/home/vmail';
+
+$quotanbmail = 1;
+$domaines['prod.com'] = 30;
+$domaines['example.fr'] = 999;
+
+$quotacapacitemail = 1 * 1024 * 1024;
+$domainescapacite['prod.com'] = 1024;
+$domainescapacite['example.fr'] = 1024 * 1024 * 1024 * 1024;
+
+$quotacapacitesite = 1 * 1024 * 1024 * 1024;
+$repertoiresites = '/var/www/vhosts';
+
+$domainescapacitesite['chantiers'] = 10 * $quotacapacitesite ;
+
+
+*/
+
+
+
+$envoimail = true;
+$configFile = '/etc/regquota/config.php';
+
+process($argv);
+
+function process($argv) {
+	global	$disablemail, $envoimail;
+    $check      	= in_array('--check', $argv);
+    $help      	 	= in_array('--help', $argv);
+    $quiet      	= in_array('--quiet', $argv);
+    $disablemail	= in_array('--disablemail', $argv);
+
+    if ($disablemail) {
+		$envoimail = false;
+	}
+
+    if ($help) {
+        displayHelp();
+        exit(0);
+    }
+
+    if ($check) {
+		$ok = checkConfig();
+        exit($ok ? 0 : 1);
+    }
+
+	$ok = lance();
+
+    exit($ok ? 0 : 1);
+}
+
+
+function dirsize($dirname) {
+    if (!is_dir($dirname) || !is_readable($dirname)) {
+        return false;
+    }
+
+    $dirname_stack[] = $dirname;
+    $size = 0;
+
+    do {
+        $dirname = array_shift($dirname_stack);
+        $handle = opendir($dirname);
+        while (false !== ($file = readdir($handle))) {
+            if ($file != '.' && $file != '..' && is_readable($dirname . DIRECTORY_SEPARATOR . $file)) {
+                if (is_dir($dirname . DIRECTORY_SEPARATOR . $file)) {
+                    $dirname_stack[] = $dirname . DIRECTORY_SEPARATOR . $file;
+                }
+                $size += filesize($dirname . DIRECTORY_SEPARATOR . $file);
+            }
+        }
+        closedir($handle);
+    } while (count($dirname_stack) > 0);
+    return $size;
+}
+
+function format_size($size) {
+	$sizes = array(" o", " Ko", " Mo", " Go", " To", " Po", " Eo", " Zo", " Yo");
+	if ($size == 0) { return('n/a'); } else {
+	return (round($size/pow(1024, ($i = floor(log($size, 1024)))), $i > 1 ? 2 : 0) . $sizes[$i]); }
+}
+
+
+function lance() {
+	global $configFile, $envoimail;
+	include_once($configFile);
+
+	$alertes = array();
+	$alertescapacite = array();
+	$message = '';
+	if (isset($quotanbmail) OR isset($quotacapacitemail)) {
+		if ($handle = opendir($repertoiremails)) {
+			$lesdomaines = array();
+			while (false !== ($entry = readdir($handle))) {
+				$rep = $repertoiremails.'/'.$entry;
+				if ($entry != '.' AND $entry != '..' AND is_dir($rep)) {
+					// Retourne la taille du répertoire
+					$lesdomainescapacite[$entry] = dirsize($rep);
+
+					// Nombre de boites
+					if ($handle2 = opendir($rep)) {
+						while (false !== ($entry2 = readdir($handle2))) {
+							$rep2 = $repertoiremails.'/'.$entry.'/'.$entry2;
+							if ($entry2 != '.' AND $entry2 != '..' AND is_dir($rep2)) {
+								if (isset($lesdomaines[$entry])) {
+									$lesdomaines[$entry]++;
+								} else {
+									$lesdomaines[$entry] = 1;
+								}
+							}
+						}
+					}
+				}
+			}
+
+			if (isset($quotanbmail)) {
+				foreach($lesdomaines as $domain => $nb) {
+					$max = $quotanbmail;
+					if (isset($domaines[$domain])) {
+						$max = $domaines[$domain];
+					}
+					if ($max < $nb) {
+						$alertes[$domain] = sprintf("%-30s", $domain)." | ".'Autorise : '.sprintf("%3s", $max)." | ".'Actuel : '.sprintf("%3s", $nb);
+					}
+				}
+			}
+
+			if (isset($quotacapacitemail)) {
+				foreach($lesdomainescapacite as $domain => $capacite) {
+					$max = $quotacapacitemail;
+					if (isset($domainescapacite[$domain])) {
+						$max = $domainescapacite[$domain];
+					}
+					if ($max < $capacite) {
+						$alertescapacite[$domain] = sprintf("%-30s", $domain)." | ".'Autorise : '.sprintf("%8s", format_size($max))." | ".'Actuel : '.sprintf("%8s", format_size($capacite));
+					}
+				}
+			}
+		} else {
+			out('Verifier le repertoire de configuration pour les mails !', 'error');
+			return false;
+		}
+	}
+
+	if (isset($quotacapacitesite)) {
+		if ($handle = opendir($repertoiresites)) {
+			while (false !== ($entry = readdir($handle))) {
+				$rep = $repertoiresites.'/'.$entry;
+				if ($entry != '.' AND $entry != '..' AND is_dir($rep) AND is_dir($rep.'/www/')) {
+					$lesdomainescapacitesite[$entry] = dirsize($rep.'/www/');
+					// echo '* '.$entry.' : '.$lesdomainescapacitesite[$entry].PHP_EOL;
+				}
+			}
+
+			if (isset($quotacapacitesite)) {
+				foreach($lesdomainescapacitesite as $domain => $capacite) {
+					$max = $quotacapacitesite;
+					if (isset($domainescapacitesite[$domain])) {
+						$max = $domainescapacitesite[$domain];
+					}
+					if ($max < $capacite) {
+						$alertescapacitesite[$domain] = sprintf("%-30s", $domain)." | ".'Autorise : '.sprintf("%8s", format_size($max))." | ".'Actuel : '.sprintf("%8s", format_size($capacite));
+					}
+				}
+			}
+		} else {
+			out('Verifier le repertoire de configuration pour les mails !', 'error');
+			return false;
+		}
+
+	}
+
+	/* DEBUT : Génération du message */
+	if (count($alertes) > 0 ) {
+		$message .= 'Nombre de boites mails depasse :'.PHP_EOL;
+		foreach($alertes as $alerte) {
+			// echo $alerte.PHP_EOL;
+			$message .= $alerte.PHP_EOL;
+		}
+		$message .= PHP_EOL.'--------------------------------------------------------------'.PHP_EOL.PHP_EOL;
+	}
+
+	if (count($alertescapacite) > 0 ) {
+		$message .= 'Capacite mails depasse :'.PHP_EOL;
+		foreach($alertescapacite as $alerte) {
+			// echo $alerte.PHP_EOL;
+			$message .= $alerte.PHP_EOL;
+		}
+		$message .= PHP_EOL.'--------------------------------------------------------------'.PHP_EOL.PHP_EOL;
+	}
+	if (count($alertescapacitesite) > 0 ) {
+		$message .= 'Capacite site depasse :'.PHP_EOL;
+		foreach($alertescapacitesite as $alerte) {
+			// echo $alerte.PHP_EOL;
+			$message .= $alerte.PHP_EOL;
+		}
+		$message .= PHP_EOL.'--------------------------------------------------------------'.PHP_EOL.PHP_EOL;
+	}
+
+	if ($message != '') {
+		if ($envoimail) {
+			$subject = '! Quota !';
+			$headers = 'From: '.$maildest.PHP_EOL.'Reply-To: '.$maildest.PHP_EOL.'X-Mailer: PHP/'.phpversion();
+			mail($maildest, $subject, $message, $headers);
+			mail('regis.enguehard@gmail.com', $subject, $message, $headers);
+		}
+
+		echo $message;
+	}
+	/* FIN : Génération du message */
+
+	return true;
+}
+
+
+/**
+ * displays the help
+ */
+function displayHelp() {
+    out('
+Reg Quota Mails
+------------------
+Options
+--help               this help
+--check              for checking environment only
+
+', 'info');
+}
+
+/**
+ * check the configuration
+ */
+function checkConfig() {
+	global $configFile;
+
+	if (!file_exists($configFile)) {
+		$errors['config'] = true;
+	} else {
+		include_once($configFile);
+	}
+
+	if (!isset($maildest)) {
+		$errors['maildest'] = true;
+	}
+
+	if (!isset($repertoiremails)) {
+		$errors['repertoiremails'] = true;
+	}
+
+	if (!isset($domaines)) {
+		$errors['domaines'] = true;
+	}
+	if (!isset($quotanbmail)) {
+		$errors['quotanbmail'] = true;
+	}
+
+	if (!isset($quotacapacitemail)) {
+		$errors['quotacapacitemail'] = true;
+	}
+	if (!isset($domainescapacite)) {
+		$errors['domainescapacite'] = true;
+	}
+
+	if (!isset($quotacapacitesite)) {
+		$errors['quotacapacitesite'] = true;
+	}
+
+	if (!empty($errors)) {
+		out("Some settings on your machine make Composer unable to work properly.", 'error');
+		out('Make sure that you fix the issues listed below and run this script again:', 'error');
+		$text = '';
+
+        foreach ($errors as $error => $current) {
+            switch ($error) {
+                case 'config':
+					$text = PHP_EOL."Impossible de trouver le fichier de configuration : ".$configFile;
+                    break;
+                case 'maildest':
+                    $text = PHP_EOL."La variable \$maildest indiquant le destinataire du mail n'est pas initialise";
+                    break;
+                case 'repertoiremails':
+                    $text = PHP_EOL."La variable \$repertoiremails indiquant le repertoire des mails n'est pas initialise".PHP_EOL."\t\$repertoiresites = /var/mail/;";
+                    break;
+                case 'domaines':
+                    $text = PHP_EOL."La variable \$domaines indiquant la liste des domaine avec leur quota n'est pas initialise :".PHP_EOL."\t\$domaines['example.org'] = 5;".PHP_EOL."\t\$domaines['example.fr'] = 10;";
+                    break;
+                case 'quotanbmail':
+                    $text = PHP_EOL."La variable \$quotanbmail indiquant la nombre de boites mails par domaine n'est pas initialise :".PHP_EOL."\t\$quotanbmail = 5;";
+                    break;
+                case 'quotacapacitemail':
+                    $text = PHP_EOL."La variable \$quotacapacitemail indiquant la capacité maximales par default des domaines n'est pas initialise :".PHP_EOL."\t\$quotacapacitemail = 5;";
+                    break;
+                case 'domainescapacite':
+                    $text = PHP_EOL."La variable \$domainescapacite indiquant la liste des domaine avec leur quota n'est pas initialise :".PHP_EOL."\t\$domainescapacite['example.org'] = 1 * 1024 * 1024; // 1 Mo".PHP_EOL."\t\$domainescapacite['example.fr'] = 10 * 1024 * 1024; // 10 Mo";
+                    break;
+                case 'quotacapacitesite':
+                    $text = PHP_EOL."La variable \$quotacapacitesite indiquant la capacité maximales par default des sites Internet n'est pas initialise :".PHP_EOL."\t\$quotacapacitesite = 5;";
+                    break;
+                case 'repertoiresites':
+                    $text = PHP_EOL."La variable \$repertoiresites indiquant le repertoire des sites Internet n'est pas initialise".PHP_EOL."\t\$repertoiresites = /var/www/vhosts/;";
+                    break;
+            }
+            out($text, 'info');
+        }
+
+        out('');
+        return false;
+	}
+
+	out(PHP_EOL."All settings correct for using Reg Quota Mails".PHP_EOL, 'success');
+	return true;
+}
+
+
+/**
+ * colorize output
+ */
+function out($text, $color = null, $newLine = true) {
+    if (DIRECTORY_SEPARATOR == '\\') {
+        $hasColorSupport = false !== getenv('ANSICON');
+    } else {
+        $hasColorSupport = true;
+    }
+
+    $styles = array(
+        'success' => "\033[0;32m%s\033[0m",
+        'error' => "\033[31;31m%s\033[0m",
+        'info' => "\033[33;33m%s\033[0m"
+    );
+
+    $format = '%s';
+
+    if (isset($styles[$color]) && $hasColorSupport) {
+        $format = $styles[$color];
+    }
+
+    if ($newLine) {
+        $format .= PHP_EOL;
+    }
+
+    printf($format, $text);
+}
+

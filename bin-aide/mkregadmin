@@ -1,0 +1,220 @@
+#!/usr/bin/php5
+<?php
+/*
+ * This file is part of mkregadmin.
+ *
+ * (c) Regis Enguehard <regis.enguehard@gmail.com>
+ *
+ * This file is under Copyright
+ */
+$nomdossier = '';
+process($argv);
+
+function process($argv) {
+	global	$nomdossier;
+    $help      	 	= in_array('--help', $argv);
+
+	if (count($argv) > 1 AND isset($argv[1])) {
+		$nomdossier = $argv[(count($argv) - 1)];
+	}
+
+    if ($help) {
+        displayHelp();
+        exit(0);
+    }
+
+
+    $ok = lance();
+    exit($ok ? 0 : 1);
+}
+
+
+function copy_r( $path, $dest ) {
+	if( is_dir($path) ) {
+		@mkdir( $dest );
+		$objects = scandir($path);
+		if( sizeof($objects) > 0 ) {
+			foreach( $objects as $file ) {
+				if( $file == "." || $file == ".." )
+					continue;
+				// go on
+				if( is_dir( $path.DIRECTORY_SEPARATOR.$file ) ) {
+					copy_r( $path.DIRECTORY_SEPARATOR.$file, $dest.DIRECTORY_SEPARATOR.$file );
+				} else {
+					copy( $path.DIRECTORY_SEPARATOR.$file, $dest.DIRECTORY_SEPARATOR.$file );
+				}
+			}
+		}
+		return true;
+	} elseif( is_file($path) ) {
+		return copy($path, $dest);
+	} else {
+		return false;
+	}
+}
+
+function recurse_chown_chgrp($mypath, $uid, $gid) {
+    $d = opendir ($mypath) ;
+    while(($file = readdir($d)) !== false) {
+        if ($file != "." && $file != "..") {
+
+            $typepath = $mypath . "/" . $file ;
+
+            //print $typepath. " : " . filetype ($typepath). "<BR>" ;
+            if (filetype ($typepath) == 'dir') {
+                recurse_chown_chgrp ($typepath, $uid, $gid);
+            }
+
+            chown($typepath, $uid);
+            chgrp($typepath, $gid);
+
+        }
+    }
+ }
+
+function chmod_R($path, $filemode, $dirmode) {
+    if (is_dir($path) ) {
+        if (!chmod($path, $dirmode)) {
+            $dirmode_str=decoct($dirmode);
+            print "Failed applying filemode '$dirmode_str' on directory '$path'\n";
+            print "  `-> the directory '$path' will be skipped from recursive chmod\n";
+            return;
+        }
+        $dh = opendir($path);
+        while (($file = readdir($dh)) !== false) {
+            if($file != '.' && $file != '..') {  // skip self and parent pointing directories
+                $fullpath = $path.'/'.$file;
+                chmod_R($fullpath, $filemode,$dirmode);
+            }
+        }
+        closedir($dh);
+    } else {
+        if (is_link($path)) {
+            print "link '$path' is skipped\n";
+            return;
+        }
+        if (!chmod($path, $filemode)) {
+            $filemode_str=decoct($filemode);
+            print "Failed applying filemode '$filemode_str' on file '$path'\n";
+            return;
+        }
+    }
+}
+
+
+function rrmdir($dir) {
+    if (is_dir($dir)) {
+        $objects = scandir($dir);
+        foreach ($objects as $object) {
+            if ($object != "." && $object != "..") {
+                if (filetype($dir."/".$object) == "dir") rrmdir($dir."/".$object); else unlink($dir."/".$object);
+            }
+        }
+        reset($objects);
+        rmdir($dir);
+    }
+}
+
+
+function lance() {
+	global $nomdossier;
+
+	if ($nomdossier == '') {
+		out('Indiquez le nom du dossier !', 'error');
+		return false;
+	}
+	$dest = '/var/www/vhosts/'.$nomdossier;
+	if (file_exists($dest)) {
+		out('Le dossier existe !', 'error');
+		return false;
+	}
+
+	/* DEBUT fichiers */
+	mkdir($dest);
+	chown($dest, 'www-data');
+	chgrp($dest, 'www-data');
+	copy_r('/var/www/vhosts/exemple_regadmin/', $dest);
+    rrmdir($dest.'/.git');
+    symlink('/var/www/vhosts/exemple/www/images', $dest.'/www/images');
+    symlink('/var/www/vhosts/exemple/www/reg_librairies', $dest.'/www/reg_librairies');
+	recurse_chown_chgrp($dest, 'www-data', 'www-data');
+	chmod_R($dest, 0777, 0777);
+	/* FIN fichiers */
+
+
+	/* DEBUT BDD */
+	$link = mysql_connect("localhost", "regis", "regis");
+	$q = mysql_query("CREATE DATABASE `".$nomdossier."`", $link);
+	$output = shell_exec('mysqldump -C -h localhost -u regis -pregis exemple1 > /tmp/exemple1.sql');
+	$output2 = shell_exec("mysql -h localhost -u regis -pregis ".$nomdossier." < /tmp/exemple1.sql");
+
+	$db = mysql_select_db($nomdossier, $link);
+	$q = mysql_query("UPDATE `".$nomdossier."`.reg_reglages SET domaine='http://".mb_strtolower($nomdossier).".ca-dev.en-prod.com/', client='".ucfirst($nomdossier)."' WHERE reg_reglages.id=1", $link);
+    $fic = '[default]
+db = '.$nomdossier.'
+host = localhost
+passwd = regis
+username = regis
+
+';
+	file_put_contents($dest.'/reg_include/ini/database.ini', $fic);
+	mysql_close($link);
+
+	unlink('/tmp/exemple1.sql');
+	/* FIN BDD */
+
+    /* DEBUT MAIL */
+    mail('regis.enguehard@gmail.com', 'mkregadmin : '.$dest, 'mkregadmin : '.$dest);
+	out('Le dossier '.$dest.' est cree', 'info');
+    /* FIN MAIL */
+
+	return true;
+}
+
+
+/**
+ * displays the help
+ */
+function displayHelp() {
+    out('
+Reg Quota Mails
+------------------
+Options
+--help               this help
+
+', 'info');
+}
+
+/**
+ * colorize output
+ */
+function out($text, $color = null, $newLine = true) {
+    if (DIRECTORY_SEPARATOR == '\\') {
+        $hasColorSupport = false !== getenv('ANSICON');
+    } else {
+        $hasColorSupport = true;
+    }
+
+    $styles = array(
+        'success' => "\033[0;32m%s\033[0m",
+        'error' => "\033[31;31m%s\033[0m",
+        'info' => "\033[33;33m%s\033[0m"
+    );
+
+    $format = '%s';
+
+    if (isset($styles[$color]) && $hasColorSupport) {
+        $format = $styles[$color];
+    }
+
+    if ($newLine) {
+        $format .= PHP_EOL;
+    }
+
+    printf($format, $text);
+}
+
+
+
+
+?>
