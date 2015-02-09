@@ -1,0 +1,4 @@
+qpdf --decrypt projet-adp.pdf projet-adp_OK.pdf
+pdftk projet-adp_OK.pdf cat output projet-adp_modif.pdf
+pdftk projet-adp_modif.pdf update_info rapport.txt projet-adp_modif_ok.pdf
+
