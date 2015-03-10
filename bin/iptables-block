@@ -8,7 +8,7 @@ then
     echo $USAGE
     exit 255
 fi
-    
+
 /sbin/iptables -A INPUT -p tcp --dest $1 -j DROP
 /sbin/iptables -A INPUT -p udp --dest $1 -j DROP
 /sbin/iptables -A OUTPUT -p tcp --dest $1 -j DROP
