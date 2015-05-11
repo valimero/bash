@@ -1,0 +1,7 @@
+{
+    // force XHTML profile for HTML syntax
+    "html": "xhtml",
+    "syntaxProfiles": {
+            "html": "xhtml"
+    }
+}
