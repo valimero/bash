@@ -23,3 +23,7 @@ OVH
 	* 91.121.161.184
 	* 91.121.164.227
 	* 188.165.197.144
+
+French Data Network, Fournisseur d'Accès associatif à Internet depuis 1992 : www.fdn.fr
+	* 80.67.169.12
+	* 2001:910:800::12
