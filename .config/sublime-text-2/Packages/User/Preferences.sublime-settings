@@ -6,7 +6,8 @@
     "ignored_packages":
     [
         "Vintage"
-    ],
+    ],    
+    "word_separators": "./\\()\"'-:,.;<>~!@%^&*|+=[]{}`~?",
     "open_files_in_new_window": false,
     "show_full_path": true,
     "tabs_size":4,
