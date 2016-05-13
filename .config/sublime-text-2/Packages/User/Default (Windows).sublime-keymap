@@ -15,5 +15,6 @@
 
     { "keys": ["alt+:"], "command": "toggle_comment", "args": { "block": false } },
     { "keys": ["alt+ctrl+:"], "command": "toggle_comment", "args": { "block": true } },
-    {"keys": ["f12"], "command": "reindent"}
+    {"keys": ["f12"], "command": "reindent"},
+    {"keys": ["ctrl+alt+shift+m"], "command": "run_macro_file", "args": {"file": "res://Packages/User/macrobr.sublime-macro"}}
 ]
