@@ -39,7 +39,7 @@ function compress_php_src($src) {
         }
     }
     $tokens = token_get_all($src);
-   
+
     $new = "";
     $c = sizeof($tokens);
     $iw = false; // ignore whitespace
@@ -137,32 +137,25 @@ echo "\n";
 print_r($argv);
 */
 
-if (count($argv) > 1)
-{
+if (count($argv) > 1) {
 //    echo "\n";
-    foreach($argv as $indice => $nomFichier)
-    {
-	if ($indice != 0)
-	{
-	    if (file_exists($nomFichier))
-	    {
-		echo 'Traitement du fichier '.$nomFichier;
-		rename($nomFichier, $nomFichier.'super_reg');
-		file_put_contents($nomFichier, php_strip_whitespace($nomFichier.'super_reg'));
-		unlink($nomFichier.'super_reg');
-		echo ' [OK]';
-		echo "\n";
-	    }
-	    else
-	    {
-		echo 'Impossible de trouver le fichier '.$nomFichier."\n";
-	    }
-	}
+    foreach($argv as $indice => $nomFichier) {
+    	if ($indice != 0) {
+    	    if (file_exists($nomFichier))
+    	    {
+    		echo 'Traitement du fichier '.$nomFichier;
+    		rename($nomFichier, $nomFichier.'super_reg');
+    		file_put_contents($nomFichier, php_strip_whitespace($nomFichier.'super_reg'));
+    		unlink($nomFichier.'super_reg');
+    		echo ' [OK]';
+    		echo "\n";
+    	    } else {
+    		echo 'Impossible de trouver le fichier '.$nomFichier."\n";
+    	    }
+    	}
     }
 //    echo "\n";
-}
-else
-{
+} else {
     echo "\n\t".'Indiquez le(s) fichiers à traiter'."\n\t";
     echo 'phpcomp [fichier1] [fichier2] [fichier3]'."\n\n";
 }
