@@ -1,11 +1,9 @@
 #!/bin/sh
 
-USAGE="Usage: iptables-block.sh IP"
-
 if test -z "$1"
 then
     echo "Il me faut une adresse IP"
-    echo $USAGE
+    echo "Usage: iptables-block.sh IP"
     exit 255
 fi
 
