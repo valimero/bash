@@ -1,7 +1,6 @@
 if test -z "$1"
 then
     echo "Indiquez un site"
-    echo $USAGE
     exit 255
 fi
 
